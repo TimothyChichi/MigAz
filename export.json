@@ -1,0 +1,269 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "variables" : {
+  	"storageAccountName": "timothychichi",
+  	"OSDiskName": "osdiskforlinuxsimple",
+	"imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "16.04-LTS",
+    "vmName": "MigrationTest"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-06-15",
+      "name": "acl-f9f04380",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Outbound-100",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "0.0.0.0/0",
+              "destinationAddressPrefix": "0.0.0.0/0",
+              "access": "allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Inbound-100",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "0.0.0.0/0",
+              "destinationAddressPrefix": "0.0.0.0/0",
+              "access": "allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2015-06-15",
+      "name": "vpc-084f476e",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "dependsOn": [
+        "[concat(resourceGroup().id,'/providers/Microsoft.Network/networkSecurityGroups/acl-f9f04380')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "172.31.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "subnet-bc3a2fe7",
+            "properties": {
+              "addressPrefix": "172.31.0.0/20",
+              "networkSecurityGroup": {
+                "id": "[concat(resourceGroup().id,'/providers/Microsoft.Network/networkSecurityGroups/acl-f9f04380')]"
+              }
+            }
+          },
+          {
+            "name": "subnet-961e4ff0",
+            "properties": {
+              "addressPrefix": "172.31.16.0/20",
+              "networkSecurityGroup": {
+                "id": "[concat(resourceGroup().id,'/providers/Microsoft.Network/networkSecurityGroups/acl-f9f04380')]"
+              }
+            }
+          },
+          {
+            "name": "subnet-d4c3b59c",
+            "properties": {
+              "addressPrefix": "172.31.32.0/20",
+              "networkSecurityGroup": {
+                "id": "[concat(resourceGroup().id,'/providers/Microsoft.Network/networkSecurityGroups/acl-f9f04380')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "name": "eni-29abf709-PIP",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "eni-29abf709v2"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-06-15",
+      "name": "testsatck1124-WebServerSecurityGroup-1E8EZ87SGQKQK",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Inbound-100",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "0.0.0.0/0",
+              "destinationAddressPrefix": "0.0.0.0/0",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Inbound-200",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "0.0.0.0/0",
+              "destinationAddressPrefix": "0.0.0.0/0",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Outbound-101",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "0.0.0.0/0",
+              "destinationAddressPrefix": "0.0.0.0/0",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Outbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "name": "eni-29abf709",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "dependsOn": [
+        "[concat(resourceGroup().id, '/providers/Microsoft.Network/virtualNetworks/vpc-084f476e')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Network/publicIPAddresses/eni-29abf709-PIP')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Network/networkSecurityGroups/testsatck1124-WebServerSecurityGroup-1E8EZ87SGQKQK')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "172.31.20.106",
+              "publicIPAddress": {
+                "id": "[concat(resourceGroup().id, '/providers/Microsoft.Network/publicIPAddresses/eni-29abf709-PIP')]"
+              },
+              "subnet": {
+                "id": "[concat(resourceGroup().id,'/providers/Microsoft.Network/virtualNetworks/vpc-084f476e/subnets/subnet-961e4ff0')]"
+              },
+              "loadBalancerBackendAddressPools": [],
+              "loadBalancerInboundNatRules": []
+            }
+          }
+        ],
+        "enableIPForwarding": false,
+        "NetworkSecurityGroup": {
+          "id": "[concat(resourceGroup().id, '/providers/Microsoft.Network/networkSecurityGroups/testsatck1124-WebServerSecurityGroup-1E8EZ87SGQKQK')]"
+        }
+      }
+    },
+    {
+      "resources": [],
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "name": "i-0d56f984675a7a7fa",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "migAz": "4f514236-4980-4121-9933-c36ff785f3dd"
+      },
+      "dependsOn": [
+        "[concat(resourceGroup().id, '/providers/Microsoft.Network/networkInterfaces/eni-29abf709')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A1_v2"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "tim",
+          "adminPassword": "Chichi12345*"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "i-0d56f984675a7a7fa_dev_xvda",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[concat(resourceGroup().id, '/providers/Microsoft.Network/networkInterfaces/eni-29abf709')]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
